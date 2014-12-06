@@ -9,6 +9,9 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
 
 
@@ -31,6 +34,7 @@ import com.google.android.gms.wearable.Wearable;
 public class WatchListActivity extends Activity
     implements WatchListFragment.Callbacks {
 
+  public static final String INDEX = "index";
   /**
    * Whether or not the activity is in two-pane mode, i.e. running on a tablet
    * device.
@@ -71,21 +75,7 @@ public class WatchListActivity extends Activity
     PendingIntent mapPendingIntent =
         PendingIntent.getActivity(this, 0, mapIntent, 0);
 
-    NotificationCompat.Builder notificationBuilder =
-        new NotificationCompat.Builder(this)
-            .setSmallIcon(R.drawable.ic_launcher)
-            .setContentTitle("Hello")
-            .setContentText("World")
-            .setContentIntent(viewPendingIntent)
-            .addAction(R.drawable.ic_launcher,
-                "Google !!", mapPendingIntent);
 
-// Get an instance of the NotificationManager service
-    NotificationManagerCompat notificationManager =
-        NotificationManagerCompat.from(this);
-
-// Build the notification and issues it with notification manager.
-    notificationManager.notify(notificationId, notificationBuilder.build());
 
     mGoogleApiClient = new GoogleApiClient.Builder(this)
         .addApi(Wearable.API)
@@ -99,6 +89,7 @@ public class WatchListActivity extends Activity
    */
   @Override
   public void onItemSelected(String position) {
+    updateWearableNotification(position);
     if (mTwoPane) {
       // In two-pane mode, show the detail view in this activity by
       // adding or replacing the detail fragment using a
@@ -118,5 +109,14 @@ public class WatchListActivity extends Activity
       detailIntent.putExtra(WatchDetailFragment.ARG_ITEM_ID, position);
       startActivity(detailIntent);
     }
+  }
+
+  private void updateWearableNotification(String id) {
+    PutDataMapRequest putDataMapRequest = PutDataMapRequest.create("/index");
+
+    DataMap map = putDataMapRequest.getDataMap();
+    map.putString(INDEX, id);
+
+    Wearable.DataApi.putDataItem(mGoogleApiClient, putDataMapRequest.asPutDataRequest());
   }
 }
